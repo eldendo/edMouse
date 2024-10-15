@@ -9,7 +9,9 @@ program edMouse;
 		i: cardinal; // index in program (current char is p[i] )
 		s: array[0..stackSize-1] of integer; 
 		sp: cardinal = 0; // stackpointer
+		vars: array['A'..'Z'] of integer;
 		v1,v2: integer;
+		ch: char;
 		
 	procedure error(er: string);
 	begin
@@ -21,8 +23,11 @@ program edMouse;
 		var F: file of char;
 	begin
 		if paramCount=0 then error('Filename expected');
+		{$i-}
 		assign (F,paramStr(1));
 		reset(F);
+		{$i+}
+		if IOresult<>0 then error('File does not exist');
 		programSize := fileSize(F);
 		setLength(p,programSize);
 		for i := 0 to programSize-1 do read(F,p[i]);
@@ -52,7 +57,7 @@ program edMouse;
 							else write(p[i]);
 				inc(i)
 			end;
-		inc(i)
+//		inc(i)
 	end;
 	
 	function number: cardinal;
@@ -64,13 +69,23 @@ program edMouse;
 			inc(i)
 		end;
 	end;
-
+	
+	procedure closeloop;
+		var hl: integer = 0;
+	begin
+		repeat
+			if p[i]=')' then inc(hl);
+			if p[i]='(' then dec(hl);
+			dec(i)
+		until hl=0;
+		inc(i)
+	end;
+	
 begin
 	writeln('+------------------------+');
 	writeln('|   Welcome to edMouse   |');
 	writeln('| (c)2024 Marc Dendooven |');
 	writeln('+------------------------+');
-	writeln;
 
 	loadProgram;
 	for i := 0 to programSize-1 do write(p[i]);
@@ -84,7 +99,14 @@ begin
 			'~': while p[i]<>eol do inc(i);
 			'"': text;
 			'0'..'9': push(number);
-			'!': write(pop);
+			'A'..'Z': push(ord(p[i]));
+			':': begin v1:=pop; vars[char(v1)]:=pop end;
+			'.': push(vars[char(pop)]);
+			'!': if p[i+1]='''' then begin write(chr(pop));inc(i) end
+								else write(pop);
+			'?': if p[i+1]='''' 
+					then begin readln(ch);push(ord(ch));inc(i) end
+					else begin readln(v1);push(v1) end;
 			'+': push(pop+pop);
 			'*': push(pop*pop);
 			'-': begin v1:=pop;v2:=pop;push(v2-v1) end;
@@ -92,8 +114,12 @@ begin
 			'\': begin v1:=pop;v2:=pop;push(v2 mod v1) end;
 			'>': begin v1:=pop;v2:=pop;push(smallint(v2>v1)) end;
 			'<': begin v1:=pop;v2:=pop;push(smallint(v2<v1)) end;			
-			'=': begin v1:=pop;v2:=pop;push(smallint(v2=v1)) end;			
-//			'-': begin v1:=pop;v2:=pop;push(v2-v1) end;			
+			'=': begin v1:=pop;v2:=pop;push(smallint(v2=v1)) end;
+			'[': if pop=0 then while p[i]<>']' do inc(i);
+			']': ;
+			'(': ; 
+			'^': if pop=0 then while p[i]<>')' do inc(i);
+			')': closeloop;
 			'$': begin writeln; writeln; writeln('bye');halt end
 			else error('unknown character '+p[i])
 		end;
