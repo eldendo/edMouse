@@ -10,7 +10,7 @@ program edMouse;
 		s: array[0..stackSize-1] of integer; 
 		sp: cardinal = 0; // stackpointer
 		vars: array['A'..'Z'] of integer;
-		v1,v2: integer;
+		v: integer;
 		ch: char;
 		
 	procedure error(er: string);
@@ -88,7 +88,7 @@ begin
 	writeln('+------------------------+');
 
 	loadProgram;
-	for i := 0 to programSize-1 do write(p[i]);
+//	for i := 0 to programSize-1 do write(p[i]);
 	
 	i := 0;
 	repeat
@@ -100,21 +100,21 @@ begin
 			'"': text;
 			'0'..'9': push(number);
 			'A'..'Z': push(ord(p[i]));
-			':': begin v1:=pop; vars[char(v1)]:=pop end;
+			':': begin v:=pop; vars[char(v)]:=pop end;
 			'.': push(vars[char(pop)]);
 			'!': if p[i+1]='''' then begin write(chr(pop));inc(i) end
 								else write(pop);
 			'?': if p[i+1]='''' 
 					then begin readln(ch);push(ord(ch));inc(i) end
-					else begin readln(v1);push(v1) end;
+					else begin readln(v);push(v) end;
 			'+': push(pop+pop);
 			'*': push(pop*pop);
-			'-': begin v1:=pop;v2:=pop;push(v2-v1) end;
-			'/': begin v1:=pop;v2:=pop;push(v2 div v1) end;
-			'\': begin v1:=pop;v2:=pop;push(v2 mod v1) end;
-			'>': begin v1:=pop;v2:=pop;push(smallint(v2>v1)) end;
-			'<': begin v1:=pop;v2:=pop;push(smallint(v2<v1)) end;			
-			'=': begin v1:=pop;v2:=pop;push(smallint(v2=v1)) end;
+			'-': begin v:=pop;push(pop-v) end;
+			'/': begin v:=pop;push(pop div v) end;
+			'\': begin v:=pop;push(pop mod v) end;
+			'>': begin v:=pop;push(smallint(pop>v)) end;
+			'<': begin v:=pop;push(smallint(pop<v)) end;			
+			'=': begin v:=pop;push(smallint(pop=v)) end;
 			'[': if pop=0 then while p[i]<>']' do inc(i);
 			']': ;
 			'(': ; 
